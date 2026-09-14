@@ -1,6 +1,6 @@
 """env_patch.py - Railway environment ভ্যারিয়েবল দিয়ে panel login override করার মিনিমাল প্যাচ।
 Railway এ Variables ট্যাবে PANEL_SECRET ও PANEL_USER_PASS বসালেই লগিন পাসওয়ার্ড বদলে যায়।
-Default (FSFUHX / FXFUHXFFKING) আগের মতোই কাজ করে।
+Default (ASOWNER99 / ARYANSHANTO99) আগের মতোই কাজ করে।
 ব্যবহার: app.py এ `import env_patch` যোগ করুন (import ব্লকের নিচে)।
 """
 import os
