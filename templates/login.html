@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{{ config.site_title }} - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{ themes[config.theme].primary }};
+            --secondary: {{ themes[config.theme].secondary }};
+            --accent: {{ themes[config.theme].accent }};
+            --danger: {{ themes[config.theme].danger }};
+            /* Aurora Navy fixed palette — no black */
+            --navy-900: #eef0f7;
+            --navy-800: #f4f5f9;
+            --navy-700: #e5e7f0;
+            --sky-400: #6366f1;
+            --sky-500: #38bdf8;
+            --violet-400: #38bdf8;
+            --glow-sky: 0 0 40px rgba(99,102,241,.22);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-text-size-adjust: none; -moz-text-size-adjust: none; text-size-adjust: none; }
+
+        body {
+            background-color: var(--navy-800);
+            color: #1e2235;
+            font-family: 'Fira Code', 'JetBrains Mono', 'Inter', monospace;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            background-image:
+                radial-gradient(ellipse 900px 500px at 15% -10%, rgba(99,102,241,.10), transparent 60%),
+                radial-gradient(ellipse 700px 450px at 105% 15%, rgba(56,189,248,.09), transparent 60%),
+                radial-gradient(ellipse 800px 400px at 50% 115%, rgba(244,63,94,.06), transparent 60%),
+                linear-gradient(160deg, #f4f5f9 0%, #ffffff 45%, #eef0f7 100%);
+            background-attachment: fixed;
+        }
+
+        /* soft aurora blobs */
+        body::before {
+            content: "";
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: .4;
+        }
+
+        .login-container {
+            background: linear-gradient(160deg, rgba(255,255,255,.85), rgba(255,255,255,.7));
+            border: 1px solid rgba(99,102,241,.22);
+            border-radius: 22px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 20px 60px rgba(30,34,53,.12), 0 0 40px rgba(99,102,241,.14), inset 0 1px 0 rgba(255,255,255,.8);
+            animation: containerFloat 5s ease-in-out infinite;
+        }
+
+        @keyframes containerFloat {
+            0%, 100% { box-shadow: 0 20px 60px rgba(30,34,53,.12), 0 0 40px rgba(99,102,241,.12), inset 0 1px 0 rgba(255,255,255,.8); }
+            50% { box-shadow: 0 24px 70px rgba(30,34,53,.15), 0 0 60px rgba(99,102,241,.20), inset 0 1px 0 rgba(255,255,255,.9); }
+        }
+
+        .login-header { text-align: center; margin-bottom: 28px; }
+
+        .login-icon {
+            width: 80px; height: 80px; margin: 0 auto 20px;
+            background: linear-gradient(135deg, #6366f1, #38bdf8);
+            border-radius: 22px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 34px; color: #ffffff;
+            box-shadow: 0 0 34px rgba(99,102,241,.32);
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .login-title {
+            font-size: 24px; font-weight: 800; font-family: 'Inter', sans-serif;
+            color: #6366f1; letter-spacing: 3px; margin-bottom: 6px;
+            text-shadow: 0 0 22px rgba(99,102,241,.28);
+        }
+
+        .login-subtitle { font-size: 11px; opacity: .55; letter-spacing: 2px; }
+
+        .terminal-line {
+            display: flex; align-items: center; margin-bottom: 22px; font-size: 13px;
+        }
+        .terminal-prompt { color: var(--violet-400); margin-right: 10px; font-weight: bold; }
+
+        .cursor {
+            display: inline-block; width: 10px; height: 18px;
+            background: var(--sky-400); animation: blink 1s infinite; margin-left: 5px;
+        }
+        @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+        .password-container { position: relative; margin-bottom: 16px; }
+
+        .login-input {
+            width: 100%;
+            background: rgba(255,255,255,.9);
+            border: 1px solid rgba(99,102,241,.25);
+            color: #1e2235;
+            padding: 14px 45px 14px 16px;
+            border-radius: 12px;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            font-size: 14px;
+            transition: all .3s;
+            outline: none;
+        }
+
+        .login-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 18px rgba(99,102,241,.22);
+            background: #ffffff;
+        }
+
+        .password-toggle {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            color: #6366f1; cursor: pointer; font-size: 16px; opacity: .6;
+            transition: all .2s; background: none; border: none;
+        }
+        .password-toggle:hover { opacity: 1; }
+
+        .login-button {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1, #38bdf8);
+            border: 1px solid rgba(99,102,241,.3);
+            color: #ffffff;
+            padding: 14px;
+            font-size: 14px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 3px;
+            cursor: pointer; transition: all .3s;
+            font-family: 'Inter', sans-serif;
+            border-radius: 12px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 6px 20px rgba(99,102,241,.30);
+        }
+
+        .login-button:hover {
+            box-shadow: 0 0 30px rgba(99,102,241,.40);
+            transform: translateY(-1px);
+        }
+
+        .login-button::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+            transition: left .5s;
+        }
+        .login-button:hover::before { left: 100%; }
+
+        .error-message {
+            color: #b91c1c; text-align: center; margin-bottom: 18px; font-size: 12px;
+            border: 1px solid rgba(239,68,68,.35);
+            padding: 10px; border-radius: 10px;
+            background: rgba(239,68,68,.08);
+            animation: shake .5s;
+        }
+        .error-message.banned {
+            border-color: rgba(239,68,68,.55);
+            background: rgba(239,68,68,.10);
+            font-size: 12.5px; padding: 13px;
+            animation: shake .5s, pulse-red 2.2s ease-in-out infinite;
+        }
+        .error-message.pending {
+            color: #b45309;
+            border-color: rgba(245,158,11,.45);
+            background: rgba(245,158,11,.10);
+            font-size: 12.5px; padding: 13px;
+            animation: shake .5s, pulse-amber 2.2s ease-in-out infinite;
+        }
+        @keyframes pulse-amber {
+            0%, 100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
+            50% { box-shadow: 0 0 16px rgba(245,158,11,.35); }
+        }
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 rgba(239,68,68,0); }
+            50% { box-shadow: 0 0 16px rgba(239,68,68,.35); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .footer-text { text-align: center; margin-top: 22px; font-size: 10px; opacity: .45; letter-spacing: 1px; }
+
+        .version-badge {
+            position: absolute; top: 12px; right: 16px; font-size: 10px;
+            opacity: .55; letter-spacing: 1px; color: #6366f1;
+        }
+
+        .stats-row {
+            display: flex; justify-content: center; gap: 20px; margin-top: 18px;
+            padding-top: 18px; border-top: 1px solid rgba(99,102,241,.15);
+        }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #6366f1; }
+        .stat-label { font-size: 9px; opacity: .5; text-transform: uppercase; letter-spacing: 1px; }
+
+        .typing-effect::after { content: '|'; animation: blink 1s infinite; color: #6366f1; }
+
+        .trust-row {
+            background: rgba(99,102,241,.06);
+            border: 1px solid rgba(99,102,241,.20);
+            border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
+        }
+        /* ---- Mobile: ১ স্ক্রিনে ফিট (DPI-লক) ---- */
+        @media (max-width: 480px) {
+            .login-container { padding: 24px 20px; max-width: 94vw; border-radius: 18px; }
+            .login-header { margin-bottom: 16px; }
+            .login-icon { width: 58px; height: 58px; font-size: 24px; margin-bottom: 12px; border-radius: 16px; }
+            .login-title { font-size: 20px; }
+            .login-input { padding: 12px 42px 12px 14px; font-size: 16px; }
+            .login-button { padding: 13px; font-size: 13px; }
+            .terminal-line { margin-bottom: 16px; }
+            .trust-row { padding: 10px 12px; }
+        }
+    </style>
+    <script>
+    (function() {
+        // fx_device_id: browser চিনতে কুকি (CSRF নয়)
+        if (!document.cookie.includes('fx_device_id=')) {
+            let id = '';
+            try { id = localStorage.getItem('fx_device_id'); } catch(e) {}
+            if (!id) {
+                id = 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c){
+                    const r = Math.random()*16|0;
+                    return (c==='x' ? r : (r&0x3|0x8)).toString(16);
+                }) + '-' + Date.now().toString(36);
+                try { localStorage.setItem('fx_device_id', id); } catch(e) {}
+            }
+            document.cookie = 'fx_device_id=' + id + '; path=/; max-age=315360000; SameSite=Lax';
+        }
+        // trusted device হয়ে থাকলে password ছাড়াই অটো login
+        fetch('/_auto_login', {method: 'POST', credentials: 'same-origin'})
+            .then(r => r.json())
+            .then(d => { if (d.ok) window.location.href = '/'; })
+            .catch(() => {});
+    })();
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <div class="version-badge">v5.0.0</div>
+
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="fas fa-cloud"></i>
+            </div>
+            <h1 class="login-title">{{ config.site_header }}</h1>
+            <p class="login-subtitle">{{ themes[config.theme].name | upper }} · PREMIUM CONTROL PANEL</p>
+        </div>
+
+        <div class="terminal-line">
+            <span class="terminal-prompt">1hosting:~$</span>
+            <span id="typingText" class="typing-effect"></span>
+        </div>
+
+        {% if error %}
+        <div class="error-message {{ 'banned' if banned else ('pending' if device_pending else '') }}">
+            <i class="fas fa-{{ 'ban' if banned else ('hourglass-half' if device_pending else 'exclamation-triangle') }} mr-2"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/login" id="loginForm">
+            <div class="password-container">
+                <input type="text"
+                       name="username"
+                       id="username"
+                       class="login-input"
+                       placeholder="Enter username..."
+                       autocomplete="username"
+                       autofocus>
+            </div>
+            <div class="password-container">
+                <input type="password"
+                       name="password"
+                       id="password"
+                       class="login-input"
+                       placeholder="Enter access password..."
+                       autocomplete="current-password"
+                       required>
+                <button type="button" class="password-toggle" onclick="togglePassword()">
+                    <i class="fas fa-eye" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <div class="password-container trust-row">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="trust_device" name="trust_device" value="1" style="width:16px;height:16px;accent-color:#38bdf8;">
+                    <label for="trust_device" style="font-size:12px;opacity:.9;cursor:pointer;color:#bae6fd;">
+                        <i class="fas fa-mobile-alt mr-1" style="color:#a78bfa;"></i>
+                        Trust this device — never ask password again
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="login-button">
+                <i class="fas fa-shield-alt mr-2"></i>
+                AUTHENTICATE
+            </button>
+        </form>
+
+        <!-- Mode Info -->
+        <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: center;">
+            <div style="background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.3); border-radius: 12px; padding: 10px 16px; text-align:center; flex:1;">
+                <div style="color: #38bdf8; font-size: 11px; font-weight:bold; letter-spacing:2px; margin-bottom:4px;"><i class="fas fa-shield-alt"></i> ADMIN MODE</div>
+                <div style="color: #7dd3fc; font-size: 9px; line-height: 1.4;">Full control<br>All features</div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-value"><i class="fas fa-lock"></i></div>
+                <div class="stat-label">Secure</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><i class="fas fa-mobile-alt"></i></div>
+                <div class="stat-label">Trusted Devices</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><i class="fas fa-server"></i></div>
+                <div class="stat-label">VPS Ready</div>
+            </div>
+        </div>
+
+        <div class="footer-text">
+            <p>1HOSTING — PREMIUM EDITION v6.0</p>
+            <p class="mt-1">Optimized for Railway & Linux VPS</p>
+        </div>
+    </div>
+
+    <script>
+        // Typing Effect
+        const text = 'TRUST LOGIN';
+        const typingEl = document.getElementById('typingText');
+        let charIndex = 0;
+
+        function typeEffect() {
+            if (charIndex < text.length) {
+                typingEl.textContent += text.charAt(charIndex);
+                charIndex++;
+                setTimeout(typeEffect, 100);
+            }
+        }
+        setTimeout(typeEffect, 500);
+
+        // Password Toggle
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Focus username on load
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html style="-webkit-text-size-adjust: 100%; text-size-adjust: 100%;" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{{ config.site_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ config.icon_url }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+{% include 'premium_style.css' %}
+    </style>
+</head>
+<body class="{{ 'font-terminal' if config.font_family == 'terminal' else ('font-hacker' if config.font_family == 'hacker' else ('font-code' if config.font_family == 'code' else '')) }}">
+    <!-- Matrix Background -->
+    <canvas class="matrix-bg" id="matrixCanvas"></canvas>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="{{ config.icon_url }}" alt="icon" class="sidebar-brand-img">
+            <div class="sidebar-brand-text">
+                <h1>{{ config.site_header }}</h1>
+                <p>Premium Control Panel</p>
+            </div>
+            <button onclick="toggleSidebar()" class="ml-auto opacity-50 hover:opacity-100 transition text-lg" style="color:var(--text);">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Status Card -->
+        <div class="mx-4 mt-4 p-3 rounded-xl" style="background: color-mix(in srgb, var(--primary) 6%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent); box-shadow: var(--elev-1);">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="live-dot"></div>
+                <span class="text-[11px] font-bold" style="color: var(--primary); letter-spacing:1px;">SYSTEM ONLINE</span>
+                <span class="text-[9px] opacity-40 ml-auto" id="sidebar-clock"></span>
+            </div>
+            <div class="flex items-center gap-2 text-[10px] opacity-70">
+                <i class="fas fa-server" style="color: var(--secondary);"></i>
+                <span>Server Online</span>
+                <span class="ml-auto font-mono">{{ app_uptime }}</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section-label">Navigation</div>
+        <nav class="px-1 pb-2">
+            <div class="nav-item active" onclick="switchView('dashboard')" id="nav-dashboard">
+                <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+            </div>
+            <div class="nav-item" onclick="switchView('servers')" id="nav-servers">
+                <i class="fas fa-server"></i><span>My Servers</span>
+                <span class="ml-auto text-[10px] px-2 py-0.5 rounded-full" style="background: var(--primary); color: var(--bg); font-weight:800;">{{ total_count }}</span>
+            </div>
+            <div class="nav-item" onclick="switchView('terminal')" id="nav-terminal">
+                <i class="fas fa-terminal"></i><span>Terminal</span>
+            </div>
+            <div class="nav-item" onclick="switchView('processes')" id="nav-processes">
+                <i class="fas fa-microchip"></i><span>Processes</span>
+            </div>
+            <div class="nav-item" onclick="switchView('packages')" id="nav-packages">
+                <i class="fas fa-cubes"></i><span>Packages</span>
+            </div>
+            <div class="nav-item" onclick="switchView('devices')" id="nav-devices">
+                <i class="fas fa-mobile-alt"></i><span>Devices</span>
+            </div>
+            <div class="sidebar-section-label">Management</div>
+            <div class="nav-item" onclick="switchView('backup')" id="nav-backup">
+                <i class="fas fa-archive"></i><span>Backups</span>
+            </div>
+            <div class="nav-item" onclick="switchView('telegram')" id="nav-telegram">
+                <i class="fab fa-telegram"></i><span>Telegram Bot</span>
+            </div>
+            <div class="nav-item" onclick="switchView('jwtfactory')" id="nav-jwtfactory">
+                <i class="fas fa-industry"></i><span>JWT Factory</span>
+                <span class="ml-auto text-[9px] px-2 py-0.5 rounded-full" style="background: var(--accent); color: var(--bg); font-weight:800;">NEW</span>
+            </div>
+            <div class="nav-item" onclick="switchView('ports')" id="nav-ports">
+                <i class="fas fa-network-wired"></i><span>Port Scanner</span>
+            </div>
+            <div class="nav-item" onclick="switchView('health')" id="nav-health">
+                <i class="fas fa-heartbeat"></i><span>Health Score</span>
+            </div>
+            <div class="nav-item" onclick="switchView('activity')" id="nav-activity">
+                <i class="fas fa-history"></i><span>Activity Log</span>
+            </div>
+            <div class="nav-item" onclick="switchView('domains')" id="nav-domains">
+                <i class="fas fa-globe"></i><span>Domains</span>
+            </div>
+            <div class="nav-item" onclick="switchView('webhooks')" id="nav-webhooks">
+                <i class="fas fa-bell"></i><span>Webhooks</span>
+            </div>
+
+            <div class="sidebar-section-label">System</div>
+            <div class="nav-item" onclick="switchView('users')" id="nav-users">
+                <i class="fas fa-users"></i><span>Manage Users</span>
+            </div>
+            <div class="nav-item" onclick="switchView('settings')" id="nav-settings">
+                <i class="fas fa-cog"></i><span>Settings</span>
+            </div>
+            <div class="nav-item" onclick="switchView('firewall')" id="nav-firewall">
+                <i class="fas fa-shield-alt"></i><span>Firewall</span>
+            </div>
+
+            <div class="px-3 pt-3">
+                <div class="nav-item" onclick="location.href='/logout'" style="color: var(--danger);">
+                    <i class="fas fa-power-off"></i><span>Logout</span>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- ============ HEADER ============ -->
+    <header class="fx-header sticky top-0 z-50 px-4 py-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="text-xl p-2.5 rounded-xl hover:bg-white hover:bg-opacity-5 transition" style="color: var(--primary);">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="flex items-center gap-2.5">
+                    <img src="{{ config.icon_url }}" alt="icon" class="w-8 h-8 rounded-xl" style="box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 45%, transparent); object-fit: cover;">
+                    <h1 class="text-base font-extrabold tracking-widest hidden sm:block" style="color: var(--primary);">{{ config.site_header }}</h1>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-4">
+                <div class="header-chip">
+                    <i class="far fa-clock text-xs" style="color: var(--primary);"></i>
+                    <span class="text-[11px] font-mono" id="live-clock">--:--:--</span>
+                </div>
+                <div class="header-chip">
+                    <i class="fas fa-server text-xs" style="color: var(--secondary);"></i>
+                    <span class="text-[11px]">Started: {{ start_date }}</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-[11px] font-mono">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-microchip" style="color: var(--primary);"></i>
+                    <span id="header-cpu">{{ stats.cpu }}%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-memory" style="color: var(--info);"></i>
+                    <span id="header-ram">{{ stats.ram_percent }}%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-hdd" style="color: var(--warning);"></i>
+                    <span id="header-disk">{{ stats.disk_percent }}%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="px-4 py-6 max-w-7xl mx-auto relative z-10">
+        <!-- ===== DASHBOARD VIEW ===== -->
+        <div id="view-dashboard" class="section-view active">
+            <div class="mb-5">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <span class="text-[10px] font-normal opacity-50 ml-1">Real-time system overview</span>
+                </h2>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div class="stat-card text-center" style="border-left: 4px solid var(--primary);">
+                    <i class="fas fa-play-circle text-xl mb-1" style="color: var(--primary);"></i>
+                    <div class="text-2xl font-extrabold" style="color: var(--primary);" id="dash-running">{{ running_count }}</div>
+                    <div class="text-[10px] opacity-60 uppercase tracking-wider font-bold">Running</div>
+                </div>
+                <div class="stat-card text-center" style="border-left: 4px solid var(--secondary);">
+                    <i class="fas fa-server text-xl mb-1" style="color: var(--secondary);"></i>
+                    <div class="text-2xl font-extrabold" style="color: var(--secondary);" id="dash-total">{{ total_count }}</div>
+                    <div class="text-[10px] opacity-60 uppercase tracking-wider font-bold">Total</div>
+                </div>
+                <div class="stat-card text-center" style="border-left: 4px solid var(--accent);">
+                    <i class="fas fa-microchip text-xl mb-1" style="color: var(--accent);"></i>
+                    <div class="text-2xl font-extrabold" style="color: var(--accent);" id="dash-cpu">{{ stats.cpu }}%</div>
+                    <div class="text-[10px] opacity-60 uppercase tracking-wider font-bold">CPU</div>
+                    <div class="progress-bar mt-2">
+                        <div class="progress-fill" id="bar-cpu" style="width: {{ stats.cpu }}%;"></div>
+                    </div>
+                </div>
+                <div class="stat-card text-center" style="border-left: 4px solid var(--info);">
+                    <i class="fas fa-memory text-xl mb-1" style="color: var(--info);"></i>
+                    <div class="text-2xl font-extrabold" style="color: var(--info);" id="dash-ram">{{ stats.ram_percent }}%</div>
+                    <div class="text-[10px] opacity-60 uppercase tracking-wider font-bold">RAM</div>
+                    <div class="progress-bar mt-2">
+                        <div class="progress-fill" id="bar-ram" style="width: {{ stats.ram_percent }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Info Cards -->
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fas fa-chart-line"></i> System Resources
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="opacity-70 font-semibold">CPU Load</span>
+                                <span class="font-mono font-bold" id="res-cpu">{{ stats.cpu }}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="res-bar-cpu" style="width: {{ stats.cpu }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="opacity-70 font-semibold">Memory ({{ stats.ram_used }}/{{ stats.ram_total }} GB)</span>
+                                <span class="font-mono font-bold" id="res-ram">{{ stats.ram_percent }}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="res-bar-ram" style="width: {{ stats.ram_percent }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5">
+                                <span class="opacity-70 font-semibold">Disk ({{ stats.disk_used }}/{{ stats.disk_total }} GB)</span>
+                                <span class="font-mono font-bold" id="res-disk">{{ stats.disk_percent }}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="res-bar-disk" style="width: {{ stats.disk_percent }}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs">
+                                <span class="opacity-70 font-semibold">Load Avg</span>
+                                <span class="font-mono font-bold" style="color: var(--secondary);">{{ stats.load_avg[0] }} {{ stats.load_avg[1] }} {{ stats.load_avg[2] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fas fa-info-circle"></i> System Information
+                    </h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1.5 border-b" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Panel Uptime</span>
+                            <span class="font-mono font-bold" style="color: var(--primary);">{{ app_uptime }}</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Started On</span>
+                            <span class="font-mono font-bold">{{ start_date }}</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Network Sent</span>
+                            <span class="font-mono font-bold">{{ stats.net_sent }} MB</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Network Received</span>
+                            <span class="font-mono font-bold">{{ stats.net_recv }} MB</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Active Processes</span>
+                            <span class="font-mono font-bold">{{ stats.processes }}</span>
+                        </div>
+                        <div class="flex justify-between py-1.5">
+                            <span class="opacity-60">Connections</span>
+                            <span class="font-mono font-bold">{{ stats.connections }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="fx-card p-5 mb-6">
+                <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="quick-action" onclick="openCreateServerModal()">
+                        <i class="fas fa-plus-circle" style="color: var(--primary);"></i>
+                        <span>New Server</span>
+                    </div>
+                    <div class="quick-action" onclick="switchView('terminal')">
+                        <i class="fas fa-terminal" style="color: var(--warning);"></i>
+                        <span>Open Terminal</span>
+                    </div>
+                    <div class="quick-action" onclick="switchView('backup')">
+                        <i class="fas fa-archive" style="color: var(--info);"></i>
+                        <span>Backup All</span>
+                    </div>
+                    <div class="quick-action" onclick="switchView('telegram')">
+                        <i class="fab fa-telegram" style="color: #0088cc;"></i>
+                        <span>Deploy Bot</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="fx-card p-5">
+                <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-history"></i> Recent Activity
+                    <button onclick="loadActivity()" class="ml-auto text-[10px] fx-btn py-1 px-3">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </h3>
+                <div id="activity-list" class="text-xs space-y-1 max-h-48 overflow-y-auto font-mono rounded-lg p-2" style="background: rgba(0,0,0,.2);">
+                    <div class="opacity-50 text-center py-4">Loading activity...</div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== SERVERS VIEW ===== -->
+        <div id="view-servers" class="section-view">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-server"></i> My Servers
+                </h2>
+                <div class="flex gap-3">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="server-search" placeholder="Search servers..." class="fx-input w-48" onkeyup="searchServers()">
+                    </div>
+                    <select id="group-filter" class="fx-select" onchange="filterServers()">
+                        <option value="">All Groups</option>
+                        {% for g in groups %}
+                        <option value="{{ g }}">{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="openCreateServerModal()" class="fx-btn">
+                        <i class="fas fa-plus"></i> New
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== BULK OPERATIONS PANEL ===== -->
+            <div class="fx-card p-4 mb-5" style="border-color: color-mix(in srgb, var(--accent) 45%, transparent);">
+                <h3 class="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style="color: var(--accent);">
+                    <i class="fas fa-layer-group"></i> Bulk Operations
+                    <span class="text-[9px] opacity-50 font-normal normal-case">(সব server এ একসাথে)</span>
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Bulk File Upload -->
+                    <div class="rounded-lg p-3" style="background: rgba(0,0,0,.25); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-upload text-sm" style="color: var(--info);"></i>
+                            <span class="text-xs font-bold" style="color: var(--info);">Bulk File Upload</span>
+                        </div>
+                        <p class="text-[10px] opacity-50 mb-2">Multiple files সিলেক্ট করে সব server এ upload করুন।</p>
+                        <div class="flex items-center gap-2">
+                            <label class="flex-1 cursor-pointer">
+                                <div id="bulk-upload-label" class="fx-input text-[11px] py-2 cursor-pointer opacity-60 truncate">
+                                    ফাইল সিলেক্ট করুন...
+                                </div>
+                                <input type="file" id="bulk-upload-input" class="hidden" multiple onchange="handleBulkFileSelect(this)">
+                            </label>
+                            <button onclick="executeBulkUpload()" id="bulk-upload-btn" class="fx-btn fx-btn-info py-2 px-3 text-[11px]" disabled>
+                                <i class="fas fa-upload"></i> Upload All
+                            </button>
+                        </div>
+                        <div id="bulk-upload-progress" class="hidden mt-2">
+                            <div class="progress-bar"><div class="progress-fill" id="bulk-upload-bar" style="width:0%"></div></div>
+                            <div id="bulk-upload-status" class="text-[10px] mt-1 opacity-60"></div>
+                        </div>
+                    </div>
+                    <!-- Bulk Start Command -->
+                    <div class="rounded-lg p-3" style="background: rgba(0,0,0,.25); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-terminal text-sm" style="color: var(--warning);"></i>
+                            <span class="text-xs font-bold" style="color: var(--warning);">Bulk Start Command</span>
+                        </div>
+                        <p class="text-[10px] opacity-50 mb-2">একটা command দিলে সব server এ set হয়ে যাবে।</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="bulk-cmd-input" placeholder="python3 app.py" class="fx-input flex-1 text-[11px]">
+                            <button onclick="executeBulkCommand()" class="fx-btn fx-btn-warning py-2 px-3 text-[11px]">
+                                <i class="fas fa-check"></i> Set All
+                            </button>
+                        </div>
+                        <div id="bulk-cmd-result" class="hidden mt-2 text-[10px] space-y-0.5 max-h-20 overflow-y-auto font-mono"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="servers-container" class="space-y-4">
+                {% if total_count == 0 %}
+                <div class="fx-card p-10 text-center">
+                    <i class="fas fa-server text-5xl mb-4 opacity-30" style="color: var(--primary);"></i>
+                    <p class="opacity-60 mb-4">No servers deployed yet</p>
+                    <button onclick="openCreateServerModal()" class="fx-btn">
+                        <i class="fas fa-plus"></i> Deploy Your First Server
+                    </button>
+                </div>
+                {% endif %}
+                {% for id, s in servers.items() %}
+                <div class="fx-card server-card p-5" data-sid="{{ id }}" data-server-name="{{ id }}" data-group="{{ s.group }}" data-status="{{ s.status }}">
+                    <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="font-extrabold text-base truncate">{{ id }}</h3>
+                                <span class="status-{{ s.status }} px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                                    {{ s.status }}
+                                </span>
+                                {% if s.auto_restart %}
+                                <span class="server-tag"><i class="fas fa-sync-alt mr-1"></i>Auto</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                {% for tag in s.tags %}
+                                <span class="server-tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            <p class="text-[11px] opacity-50 font-mono truncate mb-1">{{ s.cmd }}</p>
+                            <div class="flex gap-4 text-[10px] opacity-60">
+                                <span><i class="far fa-calendar-alt mr-1"></i>{{ s.created_at }}</span>
+                                <span><i class="fas fa-folder mr-1"></i>{{ s.group }}</span>
+                                {% if s.status == 'running' %}
+                                <span style="color: var(--primary);"><i class="fas fa-clock mr-1"></i>{{ s.uptime }}</span>
+                                {% endif %}
+                            </div>
+                            {% if s.notes %}
+                            <p class="text-[10px] opacity-40 mt-1 italic">{{ s.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-2">
+                        {% if s.status == 'running' %}
+                        <button onclick="serverAction('{{ id }}', 'stop')" class="fx-btn fx-btn-danger py-2 px-3 text-[11px]">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button onclick="serverAction('{{ id }}', 'restart')" class="fx-btn fx-btn-warning py-2 px-3 text-[11px]">
+                            <i class="fas fa-sync-alt"></i> Restart
+                        </button>
+                        {% else %}
+                        <button onclick="serverAction('{{ id }}', 'start')" class="fx-btn py-2 px-3 text-[11px]">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button onclick="serverAction('{{ id }}', 'delete')" class="fx-btn fx-btn-danger py-2 px-3 text-[11px]">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                        {% endif %}
+                        <button onclick="toggleServerLog('{{ id }}')" class="fx-btn py-2 px-3 text-[11px]" style="border-color: var(--accent); color: var(--accent);">
+                            <i class="fas fa-terminal"></i> Logs
+                        </button>
+                        <button onclick="cloneServer('{{ id }}')" class="fx-btn py-2 px-3 text-[11px]" style="border-color: var(--secondary); color: var(--secondary);">
+                            <i class="fas fa-clone"></i> Clone
+                        </button>
+                        <button onclick="openServerManager('{{ id }}')" class="fx-btn fx-btn-info py-2 px-3 text-[11px]">
+                            <i class="fas fa-cog"></i> Manage
+                        </button>
+                    </div>
+                    <!-- Log Panel -->
+                    <div id="log-panel-{{ id }}" class="hidden mt-4 pt-3 border-t" style="border-color: var(--hairline);">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] opacity-60 uppercase tracking-wider font-bold">Live Logs</span>
+                            <div class="flex gap-2">
+                                <button onclick="copyLog('{{ id }}')" class="text-[10px] opacity-50 hover:opacity-100 transition">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button onclick="clearLog('{{ id }}')" class="text-[10px] opacity-50 hover:opacity-100 transition">
+                                    <i class="fas fa-eraser"></i> Clear
+                                </button>
+                                <button onclick="toggleServerLog('{{ id }}')" class="text-[10px] opacity-50 hover:opacity-100 transition">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                        <div class="terminal-container">
+                            <div class="terminal-header">
+                                <span class="text-[10px] opacity-60">{{ id }}@fx-hosting:~$</span>
+                                <span class="ml-auto flex gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                </span>
+                            </div>
+                            <pre id="log-content-{{ id }}" class="terminal-body" style="min-height: 200px;">Loading logs...</pre>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- ===== TERMINAL VIEW ===== -->
+        <div id="view-terminal" class="section-view">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-terminal"></i> System Terminal
+                    <span class="text-[10px] font-normal opacity-50 ml-1">[ Premium Mode ]</span>
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="terminalClear()" class="fx-btn py-1.5 px-3 text-[11px]"><i class="fas fa-eraser"></i> Clear</button>
+                    <button onclick="terminalReset()" class="fx-btn fx-btn-danger py-1.5 px-3 text-[11px]"><i class="fas fa-redo"></i> Reset</button>
+                </div>
+            </div>
+            <!-- Terminal Window -->
+            <div class="terminal-container flex flex-col rounded-2xl overflow-hidden" style="height: calc(100vh - 280px); min-height: 480px; max-height: 820px; box-shadow: 0 25px 60px rgba(0,0,0,.5); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);">
+                <!-- Title bar with traffic lights -->
+                <div class="terminal-header flex-shrink-0 flex items-center gap-2" style="padding: 10px 16px; background: linear-gradient(180deg, #1c2333, #141a28); border-bottom: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);">
+                    <span class="flex gap-1.5 mr-3">
+                        <span class="w-3 h-3 rounded-full bg-red-500 cursor-pointer hover:brightness-125" title="Close" onclick="switchView('dashboard')"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                    </span>
+                    <i class="fas fa-terminal text-[10px]" style="color: var(--primary);"></i>
+                    <span class="text-[11px] font-bold tracking-wider" style="color: var(--primary);">1HOSTING TERMINAL</span>
+                    <span class="ml-2 px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wide" style="background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);" id="term-cwd-badge">~</span>
+                    <span class="ml-auto text-[9px] opacity-40 font-mono" id="term-session-info">admin@1hosting</span>
+                </div>
+                <!-- Output area -->
+                <div id="terminal-output" class="flex-1 overflow-y-auto p-4 font-mono text-xs" style="background: #000; color: #e0e0e0; white-space: pre-wrap; word-break: break-all; line-height: 1.6;">
+                </div>
+                <!-- Shortcut keys bar -->
+                <div class="flex-shrink-0 overflow-x-auto" style="background: #111; border-top: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);">
+                    <div class="flex gap-0 min-w-max">
+                        <button class="term-key-btn" onclick="termKeyInsert('Tab')">TAB</button>
+                        <button class="term-key-btn" onclick="termKeyInsert('Ctrl+C')">CTRL+C</button>
+                        <button class="term-key-btn" onclick="termKeyInsert('Ctrl+L')">CTRL+L</button>
+                        <button class="term-key-btn" onclick="termKeyInsert('/')">/ </button>
+                        <button class="term-key-btn" onclick="termKeyInsert('~')">~ </button>
+                        <button class="term-key-btn" onclick="termKeyInsert('-')">- </button>
+                        <button class="term-key-btn" onclick="termKeyInsert('|')">| </button>
+                        <button class="term-key-btn" onclick="termKeyInsert('>')"> &gt; </button>
+                        <button class="term-key-btn" onclick="termKeyInsert('>>')">&gt;&gt;</button>
+                        <button class="term-key-btn" onclick="termKeyInsert('&&')">&amp;&amp;</button>
+                        <button class="term-key-btn" onclick="termKeyInsert(';')"> ; </button>
+                        <button class="term-key-btn" onclick="termKeyHistUp()">↑</button>
+                        <button class="term-key-btn" onclick="termKeyHistDown()">↓</button>
+                    </div>
+                </div>
+                <!-- Input bar -->
+                <div class="flex-shrink-0 flex items-center gap-2 px-4 py-3" style="background: #0a0a0a; border-top: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);">
+                    <span class="font-mono text-xs flex-shrink-0 font-bold" id="term-prompt" style="color: var(--primary); white-space: nowrap;">fx@premium:~$</span>
+                    <input type="text" id="terminal-input" class="flex-1 bg-transparent outline-none font-mono text-xs text-white caret-green-400"
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                           placeholder="command টাইপ করুন..."
+                           onkeydown="handleTerminalKey(event)"
+                           oninput="handleTerminalInput(event)">
+                    <button onclick="executeTerminal()" class="flex-shrink-0 px-4 py-1.5 rounded-lg text-[10px] font-extrabold tracking-wide" style="background: var(--primary); color: var(--bg); box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 50%, transparent);">RUN</button>
+                </div>
+                <!-- Tab completion dropdown -->
+                <div id="tab-complete-list" class="hidden absolute z-50 rounded-lg shadow-2xl font-mono text-xs" style="background: #1a1a1a; border: 1px solid color-mix(in srgb, var(--primary) 50%, transparent); max-height: 160px; overflow-y: auto; min-width: 200px;">
+                </div>
+            </div>
+        </div>
+        <!-- ===== PROCESSES VIEW ===== -->
+        <div id="view-processes" class="section-view">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-microchip"></i> Process Monitor
+                </h2>
+                <button onclick="loadProcesses()" class="fx-btn py-2 px-3 text-[11px]">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="fx-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="border-b-2 border-t border-opacity-0" style="border-bottom-color: var(--hairline);">
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">PID</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Name</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">CPU %</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">RAM %</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Status</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Started</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="processes-table">
+                            <tr>
+                                <td colspan="7" class="text-center py-8 opacity-50">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Loading processes...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- ===== PACKAGES VIEW ===== -->
+                <div id="view-devices" class="section-view">
+            <div class="fx-card p-5 mb-4">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <h2 class="text-lg font-bold flex items-center gap-2"><i class="fas fa-mobile-alt"></i> Trusted Devices</h2>
+                    <button onclick="refreshDevices()" class="fx-btn py-1.5 px-3 text-[10px]"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
+                </div>
+                <p class="text-[11px] opacity-70 mb-2">প্রথম <b>২টা ফোন</b> login-এ "Trust this device" টিক দিলে সাথে সাথে trusted হয়ে যায় (Approve লাগে না) — এরপর আর কখনো password চায় না। <b>৩য় ফোন</b> থেকে login করলে Pending এ থাকবে — Admin Approve না চাপা পর্যন্ত সে ঢুকতে পারবে না।</p>
+                <div id="devices-slotinfo" class="text-[10px] mb-3 px-3 py-1.5 rounded-lg inline-flex items-center gap-2" style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);color:#bae6fd;"></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px]">
+                        <thead>
+                            <tr class="text-left opacity-60 border-b" style="border-color:var(--hairline)">
+                                <th class="py-2 pr-3">Device</th>
+                                <th class="py-2 pr-3">Browser</th>
+                                <th class="py-2 pr-3">User</th>
+                                <th class="py-2 pr-3">First Seen</th>
+                                <th class="py-2 pr-3">Status</th>
+                                <th class="py-2 pr-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devices-tbody">
+                            <tr><td colspan="6" class="py-6 text-center opacity-60">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+<div id="view-firewall" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-shield-alt"></i> IP Firewall
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: var(--accent);">
+                        <i class="fas fa-info-circle"></i> Ban Policy
+                    </h3>
+                    <p class="text-xs opacity-80 leading-relaxed">
+                        যে কেউ <b>৩ বার ভুল password</b> দিলে সেই IP <b>২৪ ঘণ্টা</b>র জন্য auto-ban হয়।
+                        Ban-এ থাকা অবস্থায় login page-এই ব্যানার দেখায় (বাকি সময়সহ)।
+                        এখান থেকে অনমানে যেকোনো IP unban করা যায়।
+                    </p>
+                    <button onclick="refreshFirewall()" class="fx-btn w-full mt-4">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Ban List
+                    </button>
+                </div>
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: var(--danger);">
+                        <i class="fas fa-ban"></i> Banned IPs
+                    </h3>
+                    <div class="fx-table-wrap">
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr class="text-left opacity-70">
+                                    <th class="py-2 pr-3">IP</th>
+                                    <th class="py-2 pr-3">Ban Time</th>
+                                    <th class="py-2 pr-3">Left (h)</th>
+                                    <th class="py-2">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="firewall-tbody">
+                                <tr><td colspan="4" class="py-6 text-center opacity-60">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+<div id="view-packages" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-cubes"></i> Package Manager
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--accent);">
+                        <i class="fas fa-download"></i> Install Package
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Type</label>
+                            <select id="pkg-type" class="fx-select">
+                                <option value="pip">PIP (Python)</option>
+                                <option value="npm">NPM (Node.js)</option>
+                                <option value="apt">APT (Debian/Ubuntu)</option>
+                                <option value="pkg">PKG (Termux)</option>
+                                <option value="gem">GEM (Ruby)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Package Name</label>
+                            <input type="text" id="pkg-name" placeholder="requests" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Target Server</label>
+                            <select id="pkg-target" class="fx-select">
+                                <option value="">-- Select Server --</option>
+                                {% for id, s in servers.items() %}
+                                <option value="{{ id }}">{{ id }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button onclick="installPackage()" class="fx-btn w-full">
+                            <i class="fas fa-download mr-2"></i> Install
+                        </button>
+                    </div>
+                </div>
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--danger);">
+                        <i class="fas fa-trash-alt"></i> Uninstall Package
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Type</label>
+                            <select id="pkg-uninstall-type" class="fx-select">
+                                <option value="pip">PIP (Python)</option>
+                                <option value="npm">NPM (Node.js)</option>
+                                <option value="apt">APT (Debian/Ubuntu)</option>
+                                <option value="pkg">PKG (Termux)</option>
+                                <option value="gem">GEM (Ruby)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Package Name</label>
+                            <input type="text" id="pkg-uninstall-name" placeholder="package name" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Target Server</label>
+                            <select id="pkg-uninstall-target" class="fx-select">
+                                <option value="">-- Select Server --</option>
+                                {% for id, s in servers.items() %}
+                                <option value="{{ id }}">{{ id }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button onclick="uninstallPackage()" class="fx-btn fx-btn-danger w-full">
+                            <i class="fas fa-trash mr-2"></i> Uninstall
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===== BACKUP VIEW ===== -->
+        <div id="view-backup" class="section-view">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-archive"></i> Backup Manager
+                </h2>
+                <div class="flex gap-3">
+                    <select id="backup-target" class="fx-select">
+                        <option value="">All Servers</option>
+                        {% for id, s in servers.items() %}
+                        <option value="{{ id }}">{{ id }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="createBackup()" class="fx-btn">
+                        <i class="fas fa-plus"></i> Create Backup
+                    </button>
+                </div>
+            </div>
+            <!-- Full Backup Card -->
+            <div class="fx-card mb-5 overflow-hidden" style="border-color: color-mix(in srgb, var(--info) 45%, transparent);">
+                <div class="p-4 border-b flex items-center gap-2" style="border-color: var(--hairline); background: rgba(0,0,0,.15);">
+                    <i class="fas fa-server" style="color: var(--info);"></i>
+                    <span class="text-sm font-bold">Full System Backup / Restore</span>
+                </div>
+                <div class="p-5">
+                    <p class="text-[11px] opacity-70 mb-3 leading-relaxed">
+                        ডাউনলোড হবে প্রত্যেক server-এর ফাইল + সব settings (start command, cwd, auto-restart,
+                        restart interval, notes, group, tags, env vars) একটাই .zip এ। সেই .zip upload করলেই সব server আগের মতন ফিরে আসবে।
+                    </p>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <button onclick="downloadFullBackup()" class="fx-btn fx-btn-info">
+                            <i class="fas fa-cloud-download-alt"></i> Download Full Backup (.zip)
+                        </button>
+                        <button onclick="document.getElementById('full-restore-input').click()" class="fx-btn">
+                            <i class="fas fa-cloud-upload-alt"></i> Restore From Full Backup
+                        </button>
+                        <input type="file" id="full-restore-input" accept=".zip" style="display:none" onchange="restoreFullBackup(this.files[0])">
+                    </div>
+                    <div id="full-restore-progress" class="text-[11px] mt-3 opacity-70 hidden"></div>
+                </div>
+            </div>
+            <!-- Backups List -->
+            <div class="fx-card overflow-hidden">
+                <div class="p-4 border-b flex items-center gap-2" style="border-color: var(--hairline);">
+                    <i class="fas fa-list" style="color: var(--primary);"></i>
+                    <span class="text-sm font-bold">Available Backups</span>
+                    <button onclick="loadBackups()" class="ml-auto text-[10px] fx-btn py-1 px-2">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div id="backup-list">
+                    <div class="p-6 text-center opacity-50">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading backups...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PORT SCANNER VIEW ===== -->
+        <div id="view-ports" class="section-view">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-network-wired"></i> Port Scanner
+                </h2>
+                <button onclick="loadPorts()" class="fx-btn py-2 px-3 text-[11px]">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="fx-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="border-b-2" style="border-bottom-color: var(--hairline);">
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Port</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Address</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Status</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">PID</th>
+                                <th class="text-left p-3 text-[10px] uppercase tracking-wider opacity-60">Process</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ports-table">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 opacity-50">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Loading ports...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ACTIVITY LOG VIEW ===== -->
+        <div id="view-activity" class="section-view">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-history"></i> Activity Log
+                </h2>
+                <button onclick="loadActivity()" class="fx-btn py-2 px-3 text-[11px]">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="fx-card p-5">
+                <div id="activity-full-list" class="space-y-1 font-mono text-xs max-h-[70vh] overflow-y-auto">
+                    <div class="opacity-50 text-center py-8">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading activity log...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== HEALTH SCORE VIEW ===== -->
+        <div id="view-health" class="section-view">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-heartbeat"></i> Server Health Score
+                </h2>
+                <button onclick="loadHealthScores()" class="fx-btn py-2 px-3 text-[11px]">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="fx-card p-4 mb-4" style="border-color: color-mix(in srgb, var(--warning) 40%, transparent);">
+                <p class="text-xs opacity-60"><i class="fas fa-info-circle mr-1" style="color: var(--warning);"></i> Health score based on crash frequency (24h) + running status। Resource graph = last 30 min CPU/RAM।</p>
+            </div>
+            <div id="health-list" class="grid md:grid-cols-2 gap-4">
+                <div class="opacity-50 text-center py-8 col-span-2">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>Loading health data...
+                </div>
+            </div>
+        </div>
+        <!-- ===== TELEGRAM VIEW ===== -->
+        <div id="view-telegram" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fab fa-telegram"></i> Telegram Bot Hosting
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fab fa-telegram"></i> Deploy New Bot
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Bot Token</label>
+                            <input type="text" id="bot-token" placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Bot Name</label>
+                            <input type="text" id="bot-name" placeholder="MyAwesomeBot" class="fx-input">
+                        </div>
+                        <button onclick="deployTelegramBot()" class="fx-btn w-full">
+                            <i class="fas fa-rocket mr-2"></i> Deploy Bot
+                        </button>
+                        <a href="https://t.me/botfather" target="_blank" class="fx-btn fx-btn-info w-full block text-center">
+                            <i class="fas fa-external-link-alt mr-2"></i> Get Token from @BotFather
+                        </a>
+                    </div>
+                    <div class="mt-4 p-3 rounded-lg space-y-2 text-[10px] opacity-70" style="background: rgba(0,0,0,.2); border: 1px solid var(--hairline);">
+                        <p><i class="fas fa-check-circle mr-2" style="color: var(--accent);"></i> Auto-restart enabled</p>
+                        <p><i class="fas fa-check-circle mr-2" style="color: var(--accent);"></i> AIogram 3.x framework</p>
+                        <p><i class="fas fa-check-circle mr-2" style="color: var(--accent);"></i> Commands: /start, /help, /ping, /uptime, /status, /info</p>
+                    </div>
+                </div>
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fas fa-robot"></i> Your Telegram Bots
+                    </h3>
+                    <div id="telegram-bots-list" class="space-y-2">
+                        {% set has_bot = false %}
+                        {% for id, s in servers.items() %}
+                        {% if 'telegram' in s.tags or s.group == 'Telegram Bots' %}
+                        {% set has_bot = true %}
+                        <div class="flex items-center justify-between p-3 rounded-xl" style="background: rgba(0,0,0,.2); border: 1px solid var(--hairline);">
+                            <div>
+                                <span class="font-bold text-sm">{{ id }}</span>
+                                <span class="status-{{ s.status }} px-2 py-0.5 rounded-full text-[9px] ml-2 uppercase font-extrabold tracking-wider">{{ s.status }}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                {% if s.status == 'running' %}
+                                <button onclick="serverAction('{{ id }}', 'stop')" class="text-[10px] fx-btn fx-btn-danger py-1 px-2">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                                {% else %}
+                                <button onclick="serverAction('{{ id }}', 'start')" class="text-[10px] fx-btn py-1 px-2">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% if not has_bot %}
+                        <div class="text-center py-8 opacity-50">
+                            <i class="fab fa-telegram text-3xl mb-3"></i>
+                            <p class="text-xs">No Telegram bots deployed yet</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DOMAINS VIEW (ADMIN ONLY) ===== -->
+        <div id="view-domains" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-globe"></i> Domain / Subdomain Mapping
+            </h2>
+            <p class="text-xs opacity-50 mb-4">Domain/subdomain → server port map করুন। Nginx reverse-proxy config পেয়ে যাবেন।</p>
+            <div class="fx-card p-5 mb-4">
+                <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-plus-circle"></i> Add Domain Mapping
+                </h3>
+                <div class="grid md:grid-cols-4 gap-3">
+                    <select id="domain-server-select" class="fx-input">
+                        <option value="">Select Server...</option>
+                        {% for id, s in servers.items() %}
+                        <option value="{{ id }}">{{ id }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" id="domain-input" placeholder="sub.example.com" class="fx-input">
+                    <input type="number" id="domain-port-input" placeholder="Local Port (e.g. 3000)" class="fx-input">
+                    <div class="flex items-center gap-2">
+                        <label class="flex items-center gap-2 text-xs whitespace-nowrap">
+                            <input type="checkbox" id="domain-ssl-input"> SSL/HTTPS
+                        </label>
+                        <button onclick="addDomainMapping()" class="fx-btn py-2 px-3 text-[11px] flex-1">
+                            <i class="fas fa-plus"></i> Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="domains-list" class="space-y-3">
+                {% if domains %}
+                {% for sid, d in domains.items() %}
+                <div class="fx-card p-4 flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <div class="font-bold text-sm" style="color: var(--primary);">
+                            <i class="fas fa-link mr-1"></i>{{ d.domain }} {% if d.ssl %}<i class="fas fa-lock text-[10px]" style="color: var(--info);" title="SSL Enabled"></i>{% endif %}
+                        </div>
+                        <div class="text-xs opacity-60 mt-1">→ {{ sid }} : {{ d.port }} &nbsp;|&nbsp; Created: {{ d.created_at }}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="viewNginxConfig('{{ sid }}')" class="fx-btn fx-btn-info py-1.5 px-3 text-[10px]">
+                            <i class="fas fa-file-code"></i> Nginx Config
+                        </button>
+                        <button onclick="deleteDomainMapping('{{ sid }}')" class="fx-btn fx-btn-danger py-1.5 px-3 text-[10px]">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="fx-card p-8 text-center opacity-50 text-sm">
+                    <i class="fas fa-globe text-3xl mb-3 block"></i>
+                    No domains mapped yet. Add one above.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ===== WEBHOOKS VIEW (ADMIN ONLY) ===== -->
+        <div id="view-webhooks" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-bell"></i> Webhook Notifications
+            </h2>
+            <p class="text-xs opacity-50 mb-4">Crash, start, stop, high-resource alert — Discord/Telegram এ notification পান।</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: #5865F2;">
+                        <i class="fab fa-discord"></i> Discord Webhook
+                    </h3>
+                    <div>
+                        <label class="text-xs opacity-70 mb-1 block">Webhook URL</label>
+                        <input type="text" id="wh-discord-url" placeholder="https://discord.com/api/webhooks/..." class="fx-input mb-3">
+                    </div>
+                    <button onclick="testWebhook('discord')" class="fx-btn fx-btn-info py-2 px-3 text-[11px] w-full">
+                        <i class="fas fa-paper-plane"></i> Send Test Message
+                    </button>
+                </div>
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: #0088cc;">
+                        <i class="fab fa-telegram"></i> Telegram Bot
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Bot Token</label>
+                            <input type="text" id="wh-tg-token" placeholder="123456:ABC-DEF..." class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Chat ID</label>
+                            <input type="text" id="wh-tg-chatid" placeholder="-100123456789" class="fx-input">
+                        </div>
+                    </div>
+                    <button onclick="testWebhook('telegram')" class="fx-btn fx-btn-info py-2 px-3 text-[11px] w-full mt-3">
+                        <i class="fas fa-paper-plane"></i> Send Test Message
+                    </button>
+                </div>
+                <div class="fx-card p-5 md:col-span-2">
+                    <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fas fa-bell"></i> Notification Triggers
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <label class="fx-toggle-label"><input type="checkbox" id="wh-notify-crash"> 🔴 Server crashes (unexpected exit)</label>
+                        <label class="fx-toggle-label"><input type="checkbox" id="wh-notify-start"> 🟢 Server starts</label>
+                        <label class="fx-toggle-label"><input type="checkbox" id="wh-notify-stop"> 🟡 Server stops (manual)</label>
+                        <label class="fx-toggle-label"><input type="checkbox" id="wh-notify-cpu"> ⚠️ High CPU/RAM usage</label>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-3 mt-4">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">CPU Alert Threshold (%)</label>
+                            <input type="number" id="wh-cpu-threshold" value="90" min="1" max="100" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">RAM Alert Threshold (%)</label>
+                            <input type="number" id="wh-ram-threshold" value="90" min="1" max="100" class="fx-input">
+                        </div>
+                    </div>
+                    <button onclick="saveWebhookSettings()" class="fx-btn py-2 px-4 text-[11px] mt-4 w-full">
+                        <i class="fas fa-save"></i> Save Webhook Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- ===== USERS MANAGEMENT VIEW (ADMIN MODE) ===== -->
+        <div id="view-users" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-users"></i> Manage Users
+            </h2>
+            <p class="text-xs opacity-50 mb-4">আরো ADMIN account বানান — আলাদা password সহ। সব account এ full access।</p>
+            <div class="fx-card p-5 mb-4">
+                <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-user-plus"></i> Create New User
+                </h3>
+                <div class="grid md:grid-cols-3 gap-3">
+                    <input type="text" id="new-user-username" placeholder="Username" class="fx-input">
+                    <input type="password" id="new-user-password" placeholder="Password (min 4 chars)" class="fx-input">
+                    <button onclick="createUser()" class="fx-btn py-2 px-3 text-[11px]">
+                        <i class="fas fa-user-plus"></i> Create User
+                    </button>
+                </div>
+            </div>
+            <div id="users-list" class="space-y-2">
+                <div class="opacity-50 text-center py-8">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>Loading users...
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SETTINGS VIEW ===== -->
+        <div id="view-settings" class="section-view">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-cog"></i> Settings
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <!-- General Settings -->
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fas fa-sliders-h"></i> General Settings
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Site Title</label>
+                            <input type="text" id="set-title" value="{{ config.site_title }}" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Site Header</label>
+                            <input type="text" id="set-header" value="{{ config.site_header }}" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Icon URL</label>
+                            <input type="text" id="set-icon" value="{{ config.icon_url }}" class="fx-input">
+                        </div>
+                        <button onclick="saveGeneralSettings()" class="fx-btn w-full">
+                            <i class="fas fa-save mr-2"></i> Save Settings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Theme Settings -->
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                        <i class="fas fa-palette"></i> Theme Settings
+                    </h3>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        {% for key, t in themes.items() %}
+                        <button type="button" class="theme-dot {% if config.theme == key %}active{% endif %}" onclick="previewTheme('{{ key }}')"
+                                style="background: linear-gradient(135deg, {{ t.primary }}, {{ t.secondary }});"></button>
+                        {% endfor %}
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Font Style</label>
+                            <select id="set-font" class="fx-select mb-3">
+                                <option value="terminal" {% if config.font_family == 'terminal' %}selected{% endif %}>Terminal (Monospace)</option>
+                                <option value="hacker" {% if config.font_family == 'hacker' %}selected{% endif %}>Hacker</option>
+                                <option value="default" {% if config.font_family == 'default' %}selected{% endif %}>System Default</option>
+                                <option value="code" {% if config.font_family == 'code' %}selected{% endif %}>Code (Fira Code)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="saveThemeSettings()" class="fx-btn w-full">
+                        <i class="fas fa-paint-brush mr-2"></i> Apply Theme
+                    </button>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--warning);">
+                        <i class="fas fa-shield-alt"></i> Security
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Current Password</label>
+                            <input type="password" id="set-current-pass" placeholder="Current password" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">New Password</label>
+                            <input type="password" id="set-new-pass" placeholder="New password" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Target</label>
+                            <select id="set-pass-target" class="fx-select">
+                                <option value="user">User Password</option>
+                                {% if is_admin %}
+                                <option value="secret">Admin (Secret) Password</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <button onclick="changePassword()" class="fx-btn fx-btn-warning w-full">
+                            <i class="fas fa-key mr-2"></i> Change Password
+                        </button>
+                    </div>
+                </div>
+
+                <!-- JWT Factory API Settings -->
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--accent);">
+                        <i class="fas fa-key"></i> JWT Factory API
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">JWT API URL</label>
+                            <input type="text" id="set-jwt-api-url" value="{{ config.jwt_api_url }}" placeholder="https://fiddu-jwt-olive.vercel.app/token" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">JWT API Key <span class="opacity-50">(optional — খালি রাখলে API-তে key পাঠানো হবে না)</span></label>
+                            <input type="text" id="set-jwt-api-key" value="{{ config.jwt_api_key }}" placeholder="খালি রাখুন যদি key দরকার না হয়" class="fx-input">
+                        </div>
+                        <p class="text-[11px] opacity-60">🔗 JWT Factory এর সব token generation (Process Now এবং Schedule সহ) এই URL/Key দিয়ে হবে — restart লাগবে না, সেভ করলেই সাথে সাথে কার্যকর। Key ফাঁকা রাখলে request-এ কোনো key parameter পাঠানো হবে না।</p>
+                        <button onclick="saveJwtApiSettings()" class="fx-btn w-full">
+                            <i class="fas fa-save mr-2"></i> Save API Settings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="fx-card p-5">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--info);">
+                        <i class="fas fa-info-circle"></i> System Information
+                    </h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between py-1 border-b border-opacity-10" style="border-color: var(--hairline);">
+                            <span class="opacity-60">1HOSTING Premium</span>
+                            <span class="font-mono font-bold" style="color: var(--primary);">v3.1.0</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-opacity-10" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Panel Started</span>
+                            <span class="font-mono">{{ start_date }}</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-opacity-10" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Uptime</span>
+                            <span class="font-mono" id="settings-uptime">{{ app_uptime }}</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-opacity-10" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Servers</span>
+                            <span class="font-mono">{{ total_count }}</span>
+                        </div>
+                        <div class="flex justify-between py-1" style="border-color: var(--hairline);">
+                            <span class="opacity-60">Running</span>
+                            <span class="font-mono" style="color: var(--primary);">{{ running_count }}</span>
+                        </div>
+                    </div>
+                    <button onclick="loadSystemInfo()" class="fx-btn fx-btn-info w-full mt-4">
+                        <i class="fas fa-info-circle mr-2"></i> Full System Info
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- ===== CREATE SERVER MODAL ===== -->
+    <div class="modal-overlay" id="createServerModal">
+        <div class="modal-content">
+            <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--hairline);">
+                <h3 class="font-bold flex items-center gap-2" style="color: var(--primary);">
+                    <i class="fas fa-rocket"></i> Deploy New Server
+                </h3>
+                <button onclick="closeModal('createServerModal')" class="text-lg opacity-50 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="text-xs opacity-70 mb-1 block">Server Name</label>
+                    <input type="text" id="new-server-name" placeholder="my-awesome-server" class="fx-input">
+                </div>
+                <div>
+                    <label class="text-xs opacity-70 mb-1 block">Start Command</label>
+                    <input type="text" id="new-server-cmd" placeholder="python3 app.py" class="fx-input">
+                </div>
+                <div>
+                    <label class="text-xs opacity-70 mb-1 block">Group</label>
+                    <input type="text" id="new-server-group" placeholder="default" value="default" class="fx-input">
+                </div>
+                <div>
+                    <label class="text-xs opacity-70 mb-1 block">Notes</label>
+                    <input type="text" id="new-server-notes" placeholder="Optional description..." class="fx-input">
+                </div>
+                <div>
+                    <label class="text-xs opacity-70 mb-1 block">Upload File (Optional)</label>
+                    <input type="file" id="new-server-file" class="fx-input text-xs py-2">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal('createServerModal')" class="fx-btn fx-btn-danger flex-1">Cancel</button>
+                    <button onclick="createServer()" class="fx-btn flex-1" style="background: var(--primary); color: var(--bg); box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 50%, transparent);">
+                        <i class="fas fa-rocket mr-2"></i> Deploy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SERVER MANAGER MODAL ===== -->
+    <div class="modal-overlay" id="serverManagerModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--hairline);">
+                <div>
+                    <h3 class="font-bold flex items-center gap-2" style="color: var(--primary);" id="manager-title">
+                        <i class="fas fa-cog"></i> Server Manager
+                    </h3>
+                    <span class="text-[10px] opacity-50 font-mono" id="manager-id">ID: --</span>
+                </div>
+                <button onclick="closeModal('serverManagerModal')" class="text-lg opacity-50 hover:opacity-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="tab-bar px-4">
+                <button class="tab-btn active" onclick="switchManagerTab('overview')" id="tab-overview">Overview</button>
+                <button class="tab-btn" onclick="switchManagerTab('console')" id="tab-console">Console</button>
+                <button class="tab-btn" onclick="switchManagerTab('files')" id="tab-files">Files</button>
+                <button class="tab-btn" onclick="switchManagerTab('config')" id="tab-config">Config</button>
+                <button class="tab-btn" onclick="switchManagerTab('packages')" id="tab-packages"><i class="fas fa-cubes mr-1"></i>Packages</button>
+            </div>
+            <div class="p-4 relative" style="min-height: 400px;">
+                <!-- Overview Tab -->
+                <div id="manager-overview" class="manager-tab">
+                    <div class="endpoint-card mb-4">
+                        <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                            <div class="flex items-center text-xs font-bold uppercase tracking-wide" style="color: var(--text);">
+                                <span class="live-dot" id="endpoint-dot"></span>
+                                <span id="endpoint-label">Checking for a live app port…</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="endpoint-copy-btn" onclick="copyEndpointUrl()" class="fx-btn py-1 px-3 text-[10px] hidden">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <a id="endpoint-open-btn" href="#" target="_blank" class="fx-btn py-1 px-3 text-[10px] hidden" style="background: var(--primary); color: var(--bg);">
+                                    <i class="fas fa-external-link-alt"></i> Open App
+                                </a>
+                            </div>
+                        </div>
+                        <div id="endpoint-url" class="text-xs font-mono opacity-70 break-all">—</div>
+                        <div id="endpoint-short-row" class="flex items-center justify-between flex-wrap gap-2 mt-1 hidden">
+                            <div id="endpoint-short-url" class="text-xs font-mono opacity-70 break-all">—</div>
+                            <button id="endpoint-short-copy-btn" onclick="copyEndpointShortUrl()" class="fx-btn py-1 px-2 text-[10px]">
+                                <i class="fas fa-copy"></i> Copy short link
+                            </button>
+                        </div>
+                        <div class="text-[10px] opacity-40 mt-1">Auto-detected — no manual port setup needed. Once your server opens a port, this endpoint activates automatically. Both links above are public — no panel login needed to open them.</div>
+                    </div>
+                    <div class="stat-grid mb-4">
+                        <div class="stat-card">
+                            <div class="stat-label"><i class="fas fa-map-marker-alt mr-1"></i>Address</div>
+                            <div class="stat-value" id="ov-address" style="font-size:13px;">—</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label"><i class="fas fa-clock mr-1"></i>Uptime</div>
+                            <div class="stat-value" id="ov-uptime">—</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label"><i class="fas fa-microchip mr-1"></i>CPU Load</div>
+                            <div class="stat-value" id="ov-cpu">— <small>/ limit</small></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label"><i class="fas fa-memory mr-1"></i>Memory</div>
+                            <div class="stat-value" id="ov-mem">—</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label"><i class="fas fa-hdd mr-1"></i>Disk</div>
+                            <div class="stat-value" id="ov-disk">—</div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-label"><i class="fas fa-arrow-down mr-1"></i>Network (In)</div>
+                            <div class="stat-value" id="ov-netin">—</div>
+                        </div>
+                    </div>
+                    <div class="cpu-chart-wrap">
+                        <div class="text-xs font-bold uppercase tracking-wide opacity-70 mb-2">CPU Load</div>
+                        <div class="chart-canvas-box">
+                            <canvas id="ov-cpu-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Console Tab -->
+                <div id="manager-console" class="manager-tab hidden">
+                    <div class="flex gap-2 mb-3">
+                        <button onclick="managerAction('start')" class="fx-btn py-2 px-3 text-[11px]"><i class="fas fa-play"></i> Start</button>
+                        <button onclick="managerAction('stop')" class="fx-btn fx-btn-danger py-2 px-3 text-[11px]"><i class="fas fa-stop"></i> Stop</button>
+                        <button onclick="managerAction('restart')" class="fx-btn fx-btn-warning py-2 px-3 text-[11px]"><i class="fas fa-sync-alt"></i> Restart</button>
+                        <button onclick="backupCurrentServer()" class="fx-btn fx-btn-info py-2 px-3 text-[11px] ml-auto"><i class="fas fa-archive"></i> Backup</button>
+                    </div>
+                    <div class="terminal-container" style="height: 300px;">
+                        <div class="terminal-header">
+                            <span class="text-[10px] opacity-60" id="manager-console-title">console@fx-premium:~$</span>
+                            <span class="ml-auto flex items-center gap-1.5">
+                                <button onclick="logSelectAll()" class="text-[9px] px-2 py-0.5 rounded font-bold" style="background:rgba(255,255,255,.08);color:var(--text);border:1px solid color-mix(in srgb,var(--primary) 40%,transparent)" title="Select all logs"><i class="fas fa-highlighter mr-1"></i>Select All</button>
+                                <button onclick="copyManagerLog()" class="text-[9px] px-2 py-0.5 rounded font-bold" style="background:rgba(255,255,255,.08);color:var(--text);border:1px solid color-mix(in srgb,var(--primary) 40%,transparent)" title="Copy all logs"><i class="fas fa-copy mr-1"></i>Copy All</button>
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                            </span>
+                        </div>
+                        <pre id="manager-log" class="terminal-body fx-pre log-sel-friendly" style="height: 260px; min-height:260px;">Loading logs...</pre>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <span class="self-center text-sm font-bold" style="color: var(--primary);">$</span>
+                        <input type="text" id="manager-input" placeholder="Send command to server..." class="fx-input flex-1"
+                               onkeydown="if(event.key==='Enter') sendManagerCommand()">
+                        <button onclick="sendManagerCommand()" class="fx-btn py-2 px-4"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <!-- Package Installer -->
+                <div id="manager-packages" class="manager-tab hidden">
+                    <div class="fx-card p-4 mb-3">
+                        <div class="text-xs font-bold uppercase tracking-wide opacity-70 mb-3"><i class="fas fa-cubes mr-1"></i> Package Installer — <span id="pkg-c-target-name">no server</span></div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="text-[10px] opacity-70 mb-1 block">Package Manager</label>
+                                <select id="pkg-c-manager" class="fx-input text-[11px] py-2">
+                                    <option value="pip">pip (Python)</option>
+                                    <option value="pkg">pkg (Termux)</option>
+                                    <option value="apt">apt (Debian/Ubuntu)</option>
+                                    <option value="npm">npm (Node)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] opacity-70 mb-1 block">Package Name</label>
+                                <input type="text" id="pkg-c-name" class="fx-input text-[11px] py-2" placeholder="e.g. requests">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mb-3">
+                            <button onclick="pkgQuick('pip','python-telegram-bot')" class="fx-btn py-1 px-2 text-[9px]">Telegram Bot</button>
+                            <button onclick="pkgQuick('pip','aiohttp')" class="fx-btn py-1 px-2 text-[9px]">aiohttp</button>
+                            <button onclick="pkgQuick('pip','requests')" class="fx-btn py-1 px-2 text-[9px]">requests</button>
+                            <button onclick="pkgQuick('pip','pyjwt')" class="fx-btn py-1 px-2 text-[9px]">PyJWT</button>
+                            <button onclick="pkgQuick('pip','cryptography')" class="fx-btn py-1 px-2 text-[9px]">cryptography</button>
+                            <button onclick="pkgQuick('pip','pycryptodome')" class="fx-btn py-1 px-2 text-[9px]">pycryptodome</button>
+                            <button onclick="pkgQuick('pip','pillow')" class="fx-btn py-1 px-2 text-[9px]">Pillow</button>
+                            <button onclick="pkgQuick('pip','beautifulsoup4')" class="fx-btn py-1 px-2 text-[9px]">BeautifulSoup</button>
+                            <button onclick="pkgQuick('npm','express')" class="fx-btn py-1 px-2 text-[9px]">express</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="installQuickPackage()" class="fx-btn flex-1 py-2 text-[11px]"><i class="fas fa-download mr-1"></i> Install</button>
+                            <button onclick="uninstallQuickPackage()" class="fx-btn fx-btn-danger flex-1 py-2 text-[11px]"><i class="fas fa-trash-alt mr-1"></i> Uninstall</button>
+                            <button onclick="listQuickPackages()" class="fx-btn fx-btn-info flex-1 py-2 text-[11px]"><i class="fas fa-list mr-1"></i> Installed</button>
+                        </div>
+                    </div>
+                    <div class="terminal-container" style="height: 180px;">
+                        <div class="terminal-header">
+                            <span class="text-[10px] opacity-60" id="pkg-console-title">package installer</span>
+                            <button onclick="pkgSelectAll()" class="text-[9px] px-2 py-0.5 rounded font-bold ml-auto mr-1" style="background:rgba(255,255,255,.08);color:var(--text);border:1px solid color-mix(in srgb,var(--primary) 40%,transparent)"><i class="fas fa-copy mr-1"></i>Copy</button>
+                        </div>
+                        <pre id="pkg-log" class="terminal-body fx-pre log-sel-friendly" style="height: 140px;">Ready. Select a package manager and install.</pre>
+                    </div>
+                </div>
+                <!-- Files Tab -->
+                <div id="manager-files" class="manager-tab hidden">
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div class="flex gap-2">
+                            <button onclick="showCreateFileModal()" class="fx-btn py-1.5 px-3 text-[10px]"><i class="fas fa-file"></i> New File</button>
+                            <button onclick="showCreateFolderModal()" class="fx-btn py-1.5 px-3 text-[10px]"><i class="fas fa-folder"></i> New Folder</button>
+                            <button onclick="goUp()" class="fx-btn py-1.5 px-3 text-[10px]"><i class="fas fa-level-up-alt"></i> Up</button>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <span class="text-[10px] opacity-60 font-mono px-2 py-1 rounded-md" style="background: rgba(0,0,0,.3); border: 1px solid var(--hairline);" id="file-path">/</span>
+                            <label class="fx-btn fx-btn-info py-1.5 px-3 text-[10px] cursor-pointer">
+                                <i class="fas fa-upload"></i> Upload
+                                <input type="file" class="hidden" onchange="uploadFile(this)">
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Set as Command bar — file select হলে দেখায -->
+                    <div id="set-cmd-bar" class="hidden mb-2 flex items-center gap-2 px-3 py-2 rounded-xl" style="background: rgba(0,0,0,.35); border: 1px solid var(--primary); box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent);">
+                        <i class="fas fa-file-code text-xs" style="color: var(--primary);"></i>
+                        <span id="set-cmd-filename" class="text-xs font-mono flex-1 truncate" style="color: var(--text);"></span>
+                        <button id="set-cmd-extract-btn" onclick="extractSelectedFile()" class="hidden text-[10px] font-bold px-3 py-1 rounded-lg" style="background: var(--info); color: #000;">
+                            <i class="fas fa-box-open mr-1"></i> Extract
+                        </button>
+                        <button onclick="applySetAsCommand()" class="text-[10px] font-bold px-3 py-1 rounded-lg" style="background: var(--primary); color: var(--bg);">
+                            <i class="fas fa-terminal mr-1"></i> Set as Command
+                        </button>
+                        <button onclick="clearFileSelection()" class="text-[10px] px-2 py-1 rounded-lg opacity-60 hover:opacity-100" style="color: var(--text);">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="file-list" class="space-y-1 max-h-[400px] overflow-y-auto">
+                        <div class="text-center py-8 opacity-50">Loading files...</div>
+                    </div>
+                </div>
+                <!-- Config Tab -->
+                <div id="manager-config" class="manager-tab hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Start Command</label>
+                            <input type="text" id="config-cmd" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Working Directory</label>
+                            <input type="text" id="config-cwd" class="fx-input" placeholder="Leave empty for root">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Group</label>
+                            <input type="text" id="config-group" class="fx-input">
+                        </div>
+                        <div>
+                            <label class="text-xs opacity-70 mb-1 block">Notes</label>
+                            <input type="text" id="config-notes" class="fx-input">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="config-auto-restart" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background: #333;"></div>
+                            </label>
+                            <span class="text-xs">Auto Restart</span>
+                            <select id="config-interval" class="fx-select text-xs py-1">
+                                <option value="30s">30s</option>
+                                <option value="1m">1m</option>
+                                <option value="5m">5m</option>
+                                <option value="10m">10m</option>
+                                <option value="15m">15m</option>
+                                <option value="30m">30m</option>
+                                <option value="1h">1h</option>
+                                <option value="2h">2h</option>
+                                <option value="3h">3h</option>
+                                <option value="6h">6h</option>
+                                <option value="12h">12h</option>
+                                <option value="24h">24h</option>
+                            </select>
+                        </div>
+                        <button onclick="saveServerConfig()" class="fx-btn w-full">
+                            <i class="fas fa-save mr-2"></i> Save Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FILE EDITOR MODAL ===== -->
+    <div class="modal-overlay" id="fileEditorModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="p-4 border-b flex justify-between items-center" style="border-color: var(--hairline);">
+                <h3 class="font-bold flex items-center gap-2 text-sm" style="color: var(--primary);" id="editor-filename">
+                    <i class="fas fa-file-code"></i> Edit File
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleEditorSearch()" class="fx-btn py-1 px-3 text-[10px]" title="Find & Replace">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button onclick="editorSelectAll()" class="fx-btn py-1 px-3 text-[10px]" title="Select All"><i class="fas fa-highlighter mr-1"></i>Select All</button>
+                    <button onclick="editorCopyAll()" class="fx-btn py-1 px-3 text-[10px]" title="Copy All"><i class="fas fa-copy mr-1"></i>Copy All</button>
+                    <button onclick="toggleEditorSearch()" class="hidden fx-btn py-1 px-3 text-[10px]" title="spacer">
+                    </button>
+                    <button onclick="closeModal('fileEditorModal')" class="text-lg opacity-50 hover:opacity-100">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Find & Replace bar -->
+            <div id="editor-search-bar" class="hidden px-4 py-2 border-b flex flex-wrap items-center gap-2 text-[11px]" style="border-color: var(--hairline); background: rgba(0,0,0,.25);">
+                <input type="text" id="editor-search-input" placeholder="Find..." class="fx-input text-[10px] py-1 w-44"
+                       onkeydown="editorSearchKeydown(event)">
+                <input type="text" id="editor-replace-input" placeholder="Replace with..." class="fx-input text-[10px] py-1 w-44"
+                       onkeydown="if(event.key==='Enter') replaceNext()">
+                <span id="editor-search-count" class="opacity-60 text-[10px] font-mono">0/0</span>
+                <label class="flex items-center gap-1 opacity-70">
+                    <input type="checkbox" id="editor-search-casesensitive" onchange="editorSearchUpdate()"> Aa
+                </label>
+                <div class="flex gap-1">
+                    <button onclick="prevMatch()" class="fx-btn py-1 px-2 text-[10px]"><i class="fas fa-chevron-left"></i></button>
+                    <button onclick="nextMatch()" class="fx-btn py-1 px-2 text-[10px]"><i class="fas fa-chevron-right"></i></button>
+                    <button onclick="replaceNext()" class="fx-btn fx-btn-warning py-1 px-2 text-[10px]">Replace</button>
+                    <button onclick="replaceAll()" class="fx-btn fx-btn-danger py-1 px-2 text-[10px]">Replace All</button>
+                    <button onclick="toggleEditorSearch()" class="fx-btn py-1 px-2 text-[10px]"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="p-0" style="max-height: 70vh; overflow-y: auto; background: #0a0a0a;">
+                <textarea id="editor-content" class="w-full p-4 font-mono text-xs resize-none outline-none"
+                          style="min-height: 400px; background: transparent; color: #a6ffaa;"
+                          onscroll="editorSyncHighlightScroll()"></textarea>
+            </div>
+            <div class="p-4 border-t flex justify-end gap-3" style="border-color: var(--hairline);">
+                <button onclick="closeModal('fileEditorModal')" class="fx-btn fx-btn-danger">Cancel</button>
+                <button onclick="saveFileContent()" class="fx-btn" style="background: var(--primary); color: var(--bg);">
+                    <i class="fas fa-save mr-2"></i> Save File
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         JWT FACTORY VIEW
+         ================================================================= -->
+    <div id="view-jwtfactory" class="section-view">
+        <h2 class="text-lg font-bold mb-1 flex items-center gap-2" style="color: var(--primary);">
+            <i class="fas fa-industry"></i> JWT Token Factory
+            <span class="text-[10px] font-normal opacity-50 ml-1">প্যনেল থেকেই টোকেন বানান আর সার্ভারে আপলোড</span>
+        </h2>
+        <div class="text-[11px] opacity-60 mb-4">UID:Pass / JSON — API → Token → Region Split → আপনার চোয়া সার্ভার+পাথ এ সেভ</div>
+
+        <!-- ===== 1. Process Setup ===== -->
+        <div class="fx-card p-5 mb-4" style="border-left: 4px solid var(--primary);">
+            <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-flask"></i> Process Setup
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs opacity-70 mb-1 block">📄 Source — ফোনের ফাইল Upload করুন অথবা Server থেকে Browse/Load করুন (accounts.txt / JSON সব format চালে)</label>
+                    <div class="flex gap-2">
+                        <label class="fx-btn fx-btn-warning flex-1" style="min-height:42px; cursor:pointer;" for="jwf-src-localfile"><i class="fas fa-file-upload"></i> ফাইল Upload করুন<input type="file" id="jwf-src-localfile" accept=".txt,.json,.js,.csv" class="hidden" onchange="jwfLoadLocalFile(this)"></label>
+                        <button onclick="jwfBrowse('src')" class="fx-btn fx-btn-info flex-1" style="min-height:42px;"><i class="fas fa-folder-open"></i> Server Browse</button>
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                        <select id="jwf-src-server" class="fx-select flex-1" onchange="jwfLoadServerOptions('src')"></select>
+                        <select id="jwf-src-subpath" class="fx-select flex-[2]" onchange="jwfLoadServerOptions('src')"></select>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2"><span id="jwf-src-status" class="text-[11px] opacity-60">💡 ট্যাপ করে ফাইল বাছাই করুন</span></div>
+                    <textarea id="jwf-source" placeholder="Or directly এখানে পেস্ট করুন (uid:pass per line / JSON)" class="fx-input font-mono mt-2" style="min-height:110px;"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs opacity-70 mb-1 block">🖥️ Target Server</label>
+                        <select id="jwf-target-server" class="fx-select" onchange="jwfLoadServerOptions('tgt')"></select>
+                    </div>
+                    <div>
+                        <label class="text-xs opacity-70 mb-1 block">📁 Target Folder</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="jwf-target-path" placeholder="/tokens" class="fx-input flex-1">
+                            <button onclick="jwfBrowse('tgt')" class="fx-btn fx-btn-info"><i class="fas fa-folder-open"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs opacity-70 mb-1 block">🏷️ Output File Name</label>
+                        <input type="text" id="jwf-output-name" value="token_bd.json" class="fx-input" placeholder="token_bd.json">
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="jwfRunNow()" id="jwf-btn-run" class="fx-btn fx-btn-success flex-1"><i class="fas fa-play"></i> Process Now</button>
+                    <button onclick="jwfOpenScheduleModal()" class="fx-btn flex-1"><i class="fas fa-clock"></i> Schedule করুন</button>
+                </div>
+                <div id="jwf-upload-target" class="text-[11px] p-2 rounded-lg" style="background: rgba(255,255,255,.03); border:1px dashed var(--hairline); color: var(--info);"></div>
+            </div>
+
+            <!-- Live Progress -->
+            <div id="jwf-progress-wrap" class="hidden mt-4">
+                <div class="flex justify-between text-[11px] mb-1.5">
+                    <span id="jwf-pct-text" class="font-bold" style="color: var(--primary);">0%</span>
+                    <span id="jwf-latest" class="opacity-70"></span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="jwf-pct-bar" style="width:0%; background: var(--primary);"></div></div>
+                <div class="grid grid-cols-3 gap-3 mt-3">
+                    <div class="stat-card text-center" style="border-left: 4px solid var(--primary);"><div class="text-xl font-extrabold" style="color: var(--primary);" id="jwf-done">0</div><div class="text-[10px] opacity-60 font-bold">DONE</div></div>
+                    <div class="stat-card text-center" style="border-left: 4px solid var(--info);"><div class="text-xl font-extrabold" style="color: var(--info);" id="jwf-ok">0</div><div class="text-[10px] opacity-60 font-bold">SUCCESS</div></div>
+                    <div class="stat-card text-center" style="border-left: 4px solid var(--danger);"><div class="text-xl font-extrabold" style="color: var(--danger);" id="jwf-fail">0</div><div class="text-[10px] opacity-60 font-bold">FAILED</div></div>
+                </div>
+                <div id="jwf-region-files" class="mt-2 text-[11px] opacity-70 font-mono"></div>
+            </div>
+        </div>
+
+        <!-- ===== 2. Schedule Dashboard ===== -->
+        <div class="fx-card p-5" style="border-left: 4px solid var(--accent);">
+            <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--accent);">
+                <i class="fas fa-calendar-alt"></i> Schedule Dashboard
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-[11px]">
+                    <thead>
+                        <tr class="text-left opacity-70 border-b" style="border-color: var(--hairline);">
+                            <th class="p-2">নাম</th><th class="p-2">Source</th><th class="p-2">Server + Path</th>
+                            <th class="p-2">Output</th><th class="p-2">Interval</th><th class="p-2">Last Run</th>
+                            <th class="p-2">Next</th><th class="p-2 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jwf-sched-body"></tbody>
+                </table>
+                <div id="jwf-sched-empty" class="text-center opacity-50 py-6 hidden">কোনো schedule নেই — উপরে "Schedule করুন" চাপুন</div>
+            </div>
+            <button onclick="jwfOpenScheduleModal()" class="fx-btn fx-btn-info w-full mt-4"><i class="fas fa-plus"></i> New Schedule</button>
+        </div>
+
+        <!-- ===== 3. JWT Live Monitor ===== -->
+        <div class="fx-card p-5" style="border-left: 4px solid var(--info);">
+            <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--info);">
+                <i class="fas fa-satellite-dish"></i> JWT Live Monitor
+            </h3>
+            <p class="text-[11px] opacity-60 mb-3">প্রতিটা schedule-এর জন্য কত ID আছে, পরের রান কতক্ষণ পরে, আর চলতি রানের progress — সব এখানে লাইভ দেখা যাবে। Start চাপলেই সেই schedule সাথে সাথে নতুন করে JWT generate করে upload করবে।</p>
+            <div id="jwf-monitor-list" class="space-y-3"></div>
+            <div id="jwf-monitor-empty" class="text-center opacity-50 py-6 hidden">কোনো schedule নেই</div>
+        </div>
+    </div>
+
+    <!-- JWT Factory: Folder Browser Modal -->
+    <div id="jwfBrowseModal" class="modal-overlay hidden" onclick="if(event.target===this)closeJwfBrowse()">
+        <div class="fx-card w-[92%] max-w-md p-5" style="max-height:80vh; overflow-y:auto;">
+            <h3 class="text-sm font-bold mb-3 flex items-center gap-2" style="color: var(--primary);">
+                <i class="fas fa-folder-open"></i> <span id="jwf-browse-title">Browse Server</span>
+            </h3>
+            <div id="jwf-browse-crumb" class="flex flex-wrap items-center gap-1 text-[11px] font-mono mb-2 p-2 rounded-lg" style="background: rgba(255,255,255,.03); border:1px solid var(--hairline);"></div>
+            <div id="jwf-browse-path" class="text-[11px] font-mono opacity-70 mb-3 break-all"></div>
+            <div id="jwf-browse-list" class="space-y-1.5"></div>
+            <div class="flex gap-2 mt-4">
+                <input type="text" id="jwf-browse-newfolder" placeholder="নতুন folder নাম" class="fx-input flex-1">
+                <button onclick="jwfBrowseCreateFolder()" class="fx-btn fx-btn-success"><i class="fas fa-folder-plus"></i></button>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="jwfBrowseSelectPath()" class="fx-btn fx-btn-success flex-1"><i class="fas fa-check"></i> এই পাথ সিলেক্ট</button>
+                <button onclick="closeJwfBrowse()" class="fx-btn fx-btn-danger">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JWT Factory: Schedule Modal -->
+    <div id="jwfSchedModal" class="modal-overlay hidden" onclick="if(event.target===this)closeJwfSched()">
+        <div class="fx-card w-[92%] max-w-md p-5" style="max-height:80vh; overflow-y:auto;">
+            <h3 class="text-sm font-bold mb-4 flex items-center gap-2" style="color: var(--accent);">
+                <i class="fas fa-clock"></i> <span id="jwf-sched-modal-title">New Schedule</span>
+            </h3>
+            <input type="hidden" id="jwf-edit-id">
+            <div class="space-y-3">
+                <div><label class="text-xs opacity-70 mb-1 block">নাম</label>
+                    <input type="text" id="jwf-s-name" placeholder="Main Tokens" class="fx-input"></div>
+                <div><label class="text-xs opacity-70 mb-1 block">🖥️ Source Server (যে account থেকে file পড়বে)</label>
+                    <div class="flex gap-2">
+                        <select id="jwf-s-srcserver" class="fx-select flex-1" onchange="jwfRefreshSchedSrcHint()"></select>
+                        <label class="fx-btn fx-btn-warning" style="min-height:38px; cursor:pointer;" for="jwf-s-localfile"><i class="fas fa-file-upload"></i><input type="file" id="jwf-s-localfile" accept=".txt,.json,.js,.csv" class="hidden" onchange="jwfScheduleUploadFile(this)"></label>
+                        <button type="button" onclick="jwfBrowse('ssrc')" class="fx-btn fx-btn-info"><i class="fas fa-folder-open"></i></button>
+                    </div>
+                    <p class="text-[10px] opacity-50 mt-1">📤 আগে Target Server বেছে নিন, তারপর ফোন থেকে ফাইল Upload করুন — সাথে সাথে নতুন JWT generate হয়ে Target-এ upload হয়ে যাবে (ঠিক Process Now-এর মতো)। ফাইলটা এই Source Server-এও সেভ থাকবে যাতে schedule-এর প্রতিটা future run এখান থেকেই আবার generate করতে পারে।</p>
+                    <div id="jwf-s-upload-status" class="text-[11px] mt-1" style="color: var(--info);"></div>
+                </div>
+                <div><label class="text-xs opacity-70 mb-1 block">Source File (server থেকে পড়বে)</label>
+                    <div class="flex gap-2"><input type="text" id="jwf-s-srcfile" placeholder="accounts.txt" class="fx-input flex-1">
+                    <input type="text" id="jwf-s-srcpath" placeholder="/ (folder)" class="fx-input flex-1"></div>
+                    <div id="jwf-s-src-hint" class="text-[11px] opacity-60 mt-1"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs opacity-70 mb-1 block">Target Server</label>
+                        <select id="jwf-s-server" class="fx-select" onchange="jwfRefreshSchedSrcHint()"></select></div>
+                    <div><label class="text-xs opacity-70 mb-1 block">Target Folder</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="jwf-s-path" placeholder="/tokens" class="fx-input flex-1">
+                            <button type="button" onclick="jwfBrowse('stgt')" class="fx-btn fx-btn-info"><i class="fas fa-folder-open"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div><label class="text-xs opacity-70 mb-1 block">Output File Name</label>
+                    <input type="text" id="jwf-s-outname" value="token_bd.json" class="fx-input"></div>
+                <div><label class="text-xs opacity-70 mb-1 block">Interval (ঘণ্টা)</label>
+                    <select id="jwf-s-interval" class="fx-select">
+                        <option value="1">1h</option><option value="2">2h</option><option value="3">3h</option>
+                        <option value="6" selected>6h</option><option value="12">12h</option><option value="24">24h</option>
+                    </select></div>
+                <div><label class="text-xs opacity-70 mb-1 block">Region Split (optional — আলাদা Region আলাদা ফাইল)</label>
+                    <div id="jwf-s-regions" class="space-y-2"></div>
+                    <button onclick="jwfAddRegionRow()" class="fx-btn fx-btn-info w-full mt-2"><i class="fas fa-plus"></i> Region +</button></div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="jwfSaveSchedule()" class="fx-btn fx-btn-success flex-1"><i class="fas fa-save"></i> Save</button>
+                <button onclick="closeJwfSched()" class="fx-btn fx-btn-danger">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-2 max-w-sm w-full pointer-events-none"></div>
+    
+    <!-- ================= JWT FACTORY JS ================= -->
+    
+  <script src="/app.js?v=17&r={{ range(1000,9999) | random }}"></script>
+  <script>
+    /* per-request Jinja config */
+    window.__BASE_DIR = {{ base_dir | tojson }};
+    window.__BASE_DIR_RAW = {{ base_dir | tojson }};
+    window.__CONFIG_THEME = {{ config.theme | tojson }};
+    window.__SERVERS = {{ servers | tojson }};
+    window.__THEMES = {{ themes | tojson }};
+  </script>
+</body>
+</html>
